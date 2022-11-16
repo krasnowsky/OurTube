@@ -1,5 +1,7 @@
-from .models import Channel
 from rest_framework import serializers
+
+from .models import Channel
+
 
 class ChannelSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
@@ -8,6 +10,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Channel
         fields = ['id', 'name', 'external_id']
+
 
 class ChannelFilterSerializer(serializers.Serializer):
     channel_name = serializers.CharField(required=True)

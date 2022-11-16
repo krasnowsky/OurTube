@@ -1,7 +1,8 @@
 from django.db import models
+
 from channel.models import Channel
-# TO DO
-# change fields type according to actual data
+
+
 class Video(models.Model):
     title = models.CharField(max_length=30)
     external_id = models.CharField(max_length=30)
@@ -12,4 +13,3 @@ class Video(models.Model):
 
     def __str__(self):
         return self.title
-

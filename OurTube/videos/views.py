@@ -1,11 +1,12 @@
-from rest_framework import permissions
-from .serializers import VideoSerializer, VideoGetSerializer
-from rest_framework.views import APIView
-from rest_framework import permissions, status, viewsets
 from knox.auth import TokenAuthentication
-from .models import Video
-from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .serializers import VideoSerializer, VideoGetSerializer
+from .models import Video
+
 
 class VideoByChannelView(APIView):
     authentication_classes = (TokenAuthentication,)
@@ -25,6 +26,7 @@ class VideoByChannelView(APIView):
             return Response('No videos found for this channel.')
         videos = VideoSerializer(single_channel_videos, many=True)
         return Response(videos.data)
+
 
 class VideoView(APIView):
     authentication_classes = (TokenAuthentication,)

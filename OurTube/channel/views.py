@@ -1,9 +1,10 @@
-from account.models import User
 from knox.auth import TokenAuthentication
-from rest_framework import permissions, status, viewsets
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from account.models import User
 
 from .models import Channel
 from .serializers import ChannelFilterSerializer, ChannelSerializer
@@ -39,7 +40,11 @@ class ChannelViewSet(APIView):
             return Response('Channel already added', status=status.HTTP_200_OK)
         serializer = ChannelSerializer(channel)
         user.channels.add(serializer.data['id'])
-        return Response('Successfully added channel', status=status.HTTP_200_OK)
+        return Response(
+            'Successfully added channel',
+            status=status.HTTP_200_OK
+        )
+
 
 class ChannelFilter(APIView):
     authentication_classes = (TokenAuthentication,)
@@ -56,6 +61,7 @@ class ChannelFilter(APIView):
             # if channel is not in the db, get it from yt api
             return Response('getting data from yt')
         return Response(serializer.data)
+
 
 class ChannelRemove(APIView):
     authentication_classes = (TokenAuthentication,)

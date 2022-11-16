@@ -1,5 +1,6 @@
-from .models import Video
 from rest_framework import serializers
+
+from .models import Video
 
 
 class VideoSerializer(serializers.HyperlinkedModelSerializer):

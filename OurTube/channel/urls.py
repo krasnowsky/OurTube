@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import ChannelViewSet, ChannelFilter, ChannelRemove
+
+from .views import ChannelFilter, ChannelRemove, ChannelViewSet
 
 urlpatterns = [
     path('', ChannelViewSet.as_view(), name='get-channels'),
