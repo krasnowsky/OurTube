@@ -17,7 +17,8 @@ class VideoByChannelView(APIView):
         channel_id = request.data.get('channel_id')
         if not channel_id:
             user_channels = request.user.channels.all()
-            all_videos = Video.objects.filter(channel__in=user_channels).order_by('-publish_date')
+            all_videos = Video.objects.filter(
+                channel__in=user_channels).order_by('-publish_date')
             serializer = VideoSerializer(all_videos, many=True)
             return Response(serializer.data)
         single_channel_videos = Video.objects.filter(channel__pk=channel_id)

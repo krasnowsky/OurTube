@@ -6,7 +6,10 @@ from .models import Video
 class VideoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title', 'external_id', 'url', 'thumbnail_url', 'publish_date', 'channel_id']
+        fields = [
+            'id', 'title', 'external_id', 'url',
+            'thumbnail_url', 'publish_date', 'channel_id'
+        ]
 
 
 class VideoGetSerializer(serializers.Serializer):
