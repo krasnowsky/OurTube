@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from account.models import User
+from videos.api import YouTubeAPI as api
 
 from .models import Channel
 from .serializers import ChannelFilterSerializer, ChannelSerializer
@@ -46,28 +47,30 @@ class ChannelViewSet(APIView):
         )
 
 
+# filter channels for adding to user's account
 class ChannelFilter(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    # filter channels for adding to user's account
     def post(self, request):
         channel_name = request.data.get('channel_name')
         if not channel_name:
             return Response({'channel_name': 'This field is required.'})
+        final = []
         channels = Channel.objects.filter(name__icontains=channel_name)
         serializer = ChannelSerializer(channels, many=True)
-        if not serializer.data:
-            # if channel is not in the db, get it from yt api
-            return Response('getting data from yt')
-        return Response(serializer.data)
+        if len(channels) <= 2:
+            api_response = api.get_channels_by_name(channel_name)
+            merged = serializer.data + api_response
+            final = list({v['external_id']: v for v in merged}.values())
+        return Response(final)
 
 
+# remove channel from user's account
 class ChannelRemove(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    # remove channel from user's account
     def post(self, request):
         channel_name = request.data.get('channel_name')
         if not channel_name:
