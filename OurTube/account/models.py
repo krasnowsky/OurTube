@@ -9,3 +9,9 @@ class User(AbstractUser):
 
     def has_channel(self, channel):
         return channel in self.channels.all()
+
+    def get_channels_ids(self):
+        ids = []
+        for channel in self.channels.values('id').all():
+            ids.append(channel['id'])
+        return ids

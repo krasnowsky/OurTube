@@ -14,14 +14,16 @@ class VideoByChannelView(APIView):
 
     # assuming that channel exsists and user has such channel
     def get(self, request):
-        channel_id = request.data.get('channel_id')
-        if not channel_id:
+        external_id = request.data.get('external_id')
+        if not external_id:
             user_channels = request.user.channels.all()
             all_videos = Video.objects.filter(
                 channel__in=user_channels).order_by('-publish_date')
             serializer = VideoSerializer(all_videos, many=True)
             return Response(serializer.data)
-        single_channel_videos = Video.objects.filter(channel__pk=channel_id)
+        single_channel_videos = Video.objects.filter(
+            channel__external_id=external_id
+        )
         # here yt api should be asked if last video is older then 24h
         if not single_channel_videos:
             return Response('No videos found for this channel.')

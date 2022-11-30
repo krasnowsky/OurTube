@@ -8,7 +8,7 @@ from account.models import User
 from videos.api import YouTubeAPI as api
 
 from .models import Channel
-from .serializers import ChannelFilterSerializer, ChannelSerializer
+from .serializers import ChannelSerializer
 
 
 class ChannelViewSet(APIView):
@@ -23,20 +23,16 @@ class ChannelViewSet(APIView):
 
     # add channel to user's account
     def post(self, request):
-        serializer = ChannelFilterSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        data = serializer.validated_data
-        user = User.objects.get(pk=request.user.id)
-        channel = Channel.objects.filter(name=data['channel_name']).first()
+        data = request.data
+        user = request.user
+        channel = Channel.objects.filter(external_id=data['external_id']).first()
         if not channel:
             channel = Channel.objects.create(
                 name=data['channel_name'],
-                external_id=data['external_id']
+                external_id=data['external_id'],
+                thumbnail_url=data['thumbnail_url']
             )
+            videos = api.get_videos_from_channel(data['external_id'], channel)
         elif user.has_channel(channel):
             return Response('Channel already added', status=status.HTTP_200_OK)
         serializer = ChannelSerializer(channel)
@@ -57,7 +53,9 @@ class ChannelFilter(APIView):
         if not channel_name:
             return Response({'channel_name': 'This field is required.'})
         final = []
-        channels = Channel.objects.filter(name__icontains=channel_name)
+        channels = Channel.objects.exclude(
+            id__in=request.user.get_channels_ids()
+        ).filter(name__icontains=channel_name)
         serializer = ChannelSerializer(channels, many=True)
         if len(channels) <= 2:
             api_response = api.get_channels_by_name(channel_name)
@@ -72,13 +70,7 @@ class ChannelRemove(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
-        channel_name = request.data.get('channel_name')
-        if not channel_name:
-            return Response({'channel_name': 'This field is required.'})
-        channel = Channel.objects.filter(name=channel_name).first()
-        if not channel:
-            return Response('This channel does not exists')
-        if not request.user.has_channel(channel):
-            return Response(f'{channel.name} is not on your list')
+        external_id = request.data.get('external_id')
+        channel = Channel.objects.filter(external_id=external_id).first()
         request.user.channels.remove(channel)
         return Response(f'Successfully removed {channel.name}')
