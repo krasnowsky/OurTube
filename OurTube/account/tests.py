@@ -1,19 +1,138 @@
 import json
+from rest_framework import status
 
-from django.test import TestCase, Client
-from django.urls import reverse, resolve
+from django.test import TestCase
+from django.urls import reverse
+
+from .models import User
 
 class RegisterTest(TestCase):
+    def setUp(self):
+        self.username = 'test_username'
+        self.email = 'test@email.com'
+        self.password = 'test_password'
+        self.url = reverse('register')
+
+    def test_registration_no_data(self):
+        # Arrange
+        expected_response = {
+            'username': ['This field is required.'],
+            'password': ['This field is required.']
+        }
+        data = {}
+        # Act
+        response = self.client.post(self.url, data)
+        response_json = json.loads(response.content)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response_json, expected_response)
+
+    def test_registration_incomplete_data(self):
+        # Arrange
+        expected_response = {
+            'password': ['This field is required.']
+        }
+        data = {'username': 'test_username'}
+        # Act
+        response = self.client.post(self.url, data)
+        response_json = json.loads(response.content)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response_json, expected_response)
+
     def test_registration_successful(self):
         # Arrange
-        url = reverse('register')
         data = {
-            'username': 'test_username',
-            'email': 'test@email.com',
-            'password': 'test_password'
+            'username': self.username,
+            'email': self.email,
+            'password': self.password
         }
         # Act
-        response = self.client.post(url, data)
-        import ipdb; ipdb.set_trace()
+        response = self.client.post(self.url, data)
         # Assert
-        self.assertEqual(1,1)
+        response_json = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response_json['token'])
+        self.assertEqual(response_json['user']['username'], self.username)
+        self.assertEqual(response_json['user']['email'], self.email)
+        user = User.objects.get(username=self.username)
+        self.assertEqual(user.username, self.username)
+        self.assertEqual(user.email, self.email)
+        
+class LoginTest(TestCase):
+    def setUp(self):
+        self.username = 'test_username'
+        self.email = 'test@email.com'
+        self.password = 'test_password'
+        self.login_url = reverse('login')
+        self.register_url = reverse('register')
+
+    def _register_user(self):
+        data = {
+            'username': self.username,
+            'email': self.email,
+            'password': self.password
+        }
+        self.client.post(self.register_url, data)
+
+    def test_login_no_data(self):
+        # Arrange
+        data = {}
+        expected_response = {
+            'username': ['This field is required.'],
+            'password':['This field is required.']
+        }
+        # Act
+        response = self.client.post(self.login_url, data)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), expected_response)
+
+    def test_login_wrong_password(self):
+        # Arrange
+        self._register_user()
+        data = {
+            'username': self.username,
+            'password': 'wrong_password'
+        }
+        expected_response = {
+            'non_field_errors': [
+                'Unable to log in with provided credentials.'
+            ]
+        }
+        # Act
+        response = self.client.post(self.login_url, data)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), expected_response)
+
+    def test_login_wrong_username(self):
+        # Arrange
+        self._register_user()
+        data = {
+            'username': 'wrong_username',
+            'password': self.password
+        }
+        expected_response = {
+            'non_field_errors': [
+                'Unable to log in with provided credentials.'
+            ]
+        }
+        # Act
+        response = self.client.post(self.login_url, data)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), expected_response)
+
+    def test_login_successful(self):
+        # Arrange
+        self._register_user()
+        data = {
+            'username': self.username,
+            'password': self.password
+        }
+        # Act
+        response = self.client.post(self.login_url, data)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(json.loads(response.content)['token'])
