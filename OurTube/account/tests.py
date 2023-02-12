@@ -23,10 +23,9 @@ class RegisterTest(APITestCase):
         data = {}
         # Act
         response = self.client.post(self.url, data)
-        response_json = json.loads(response.content)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response_json, expected_response)
+        self.assertEqual(response.json(), expected_response)
 
     def test_registration_incomplete_data(self):
         # Arrange
@@ -36,10 +35,9 @@ class RegisterTest(APITestCase):
         data = {'username': 'test_username'}
         # Act
         response = self.client.post(self.url, data)
-        response_json = json.loads(response.content)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response_json, expected_response)
+        self.assertEqual(response.json(), expected_response)
 
     def test_registration_successful(self):
         # Arrange
@@ -51,11 +49,10 @@ class RegisterTest(APITestCase):
         # Act
         response = self.client.post(self.url, data)
         # Assert
-        response_json = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(response_json['token'])
-        self.assertEqual(response_json['user']['username'], self.username)
-        self.assertEqual(response_json['user']['email'], self.email)
+        self.assertIsNotNone(response.json()['token'])
+        self.assertEqual(response.json()['user']['username'], self.username)
+        self.assertEqual(response.json()['user']['email'], self.email)
         user = User.objects.get(username=self.username)
         self.assertEqual(user.username, self.username)
         self.assertEqual(user.email, self.email)
@@ -87,7 +84,7 @@ class LoginTest(APITestCase):
         response = self.client.post(self.login_url, data)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), expected_response)
+        self.assertEqual(response.json(), expected_response)
 
     def test_login_wrong_password(self):
         # Arrange
@@ -105,7 +102,7 @@ class LoginTest(APITestCase):
         response = self.client.post(self.login_url, data)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), expected_response)
+        self.assertEqual(response.json(), expected_response)
 
     def test_login_wrong_username(self):
         # Arrange
@@ -123,7 +120,7 @@ class LoginTest(APITestCase):
         response = self.client.post(self.login_url, data)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), expected_response)
+        self.assertEqual(response.json(), expected_response)
 
     def test_login_successful(self):
         # Arrange
@@ -136,9 +133,9 @@ class LoginTest(APITestCase):
         response = self.client.post(self.login_url, data)
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(json.loads(response.content)['token'])
+        self.assertIsNotNone(response.json()['token'])
 
-    def test_logout(self):
+    def test_logout_successful(self):
         # Arrange
         self._register_user()
         logout_url = reverse('logout')
@@ -147,7 +144,7 @@ class LoginTest(APITestCase):
             'password': self.password
         }
         login_response = self.client.post(self.login_url, data)
-        token = json.loads(login_response.content)['token']
+        token = login_response.json()['token']
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         # Act
         response = self.client.post(logout_url)
