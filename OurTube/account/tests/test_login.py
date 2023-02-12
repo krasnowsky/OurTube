@@ -3,8 +3,6 @@ from rest_framework.test import APITestCase
 
 from django.urls import reverse
 
-from account.models import User
-
 class LoginTest(APITestCase):
     def setUp(self):
         self.username = 'test_username'
