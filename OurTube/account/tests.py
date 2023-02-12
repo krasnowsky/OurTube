@@ -1,12 +1,13 @@
 import json
 from rest_framework import status
+from rest_framework.test import APITestCase
 
 from django.test import TestCase
 from django.urls import reverse
 
 from .models import User
 
-class RegisterTest(TestCase):
+class RegisterTest(APITestCase):
     def setUp(self):
         self.username = 'test_username'
         self.email = 'test@email.com'
@@ -59,7 +60,7 @@ class RegisterTest(TestCase):
         self.assertEqual(user.username, self.username)
         self.assertEqual(user.email, self.email)
         
-class LoginTest(TestCase):
+class LoginTest(APITestCase):
     def setUp(self):
         self.username = 'test_username'
         self.email = 'test@email.com'
@@ -136,3 +137,19 @@ class LoginTest(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(json.loads(response.content)['token'])
+
+    def test_logout(self):
+        # Arrange
+        self._register_user()
+        logout_url = reverse('logout')
+        data = {
+            'username': self.username,
+            'password': self.password
+        }
+        login_response = self.client.post(self.login_url, data)
+        token = json.loads(login_response.content)['token']
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        # Act
+        response = self.client.post(logout_url)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
